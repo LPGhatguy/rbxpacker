@@ -1,1 +1,1 @@
-print("Yes, this is the foo department")
+return "Yes, this is the foo department."

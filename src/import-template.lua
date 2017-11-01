@@ -3,6 +3,7 @@
 ]]
 
 local source = [=[{{SOURCE}}]=]
+local collapseEnabled = {{COLLAPSE}}
 
 local Selection = game:GetService("Selection")
 local HttpService = game:GetService("HttpService")
@@ -54,6 +55,31 @@ local function import(root, path, contents)
 	return location
 end
 
+local function collapseFolder(folder, newRoot)
+	newRoot.Parent = folder.Parent
+	newRoot.Name = folder.Name
+
+	for _, child in ipairs(folder:GetChildren()) do
+		child.Parent = newRoot
+	end
+
+	folder:Destroy()
+
+	return newRoot
+end
+
+local function tryCollapse(root)
+	if root:FindFirstChild("init") then
+		root = collapseFolder(root, root:FindFirstChild("init"))
+	end
+
+	for _, child in ipairs(root:GetChildren()) do
+		if child:IsA("Folder") then
+			tryCollapse(child)
+		end
+	end
+end
+
 local ui = Instance.new("ScreenGui")
 ui.Name = "rbxpacker"
 ui.Parent = game:GetService("CoreGui")
@@ -61,6 +87,10 @@ ui.Parent = game:GetService("CoreGui")
 local function install(root)
 	for _, file in ipairs(decoded.files) do
 		import(root, file.path, file.contents)
+	end
+
+	if collapseEnabled then
+		tryCollapse(root)
 	end
 end
 

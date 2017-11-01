@@ -102,11 +102,16 @@ fn main() {
         (@arg name: --name +takes_value "The name of the package to show in the installer")
         (@arg folder: --folder +takes_value "Wraps the package in a Folder with the given name")
         (@arg exclude: --exclude +takes_value +multiple "Exclude the given glob patterns from the bundle")
+        (@arg no_collapse: --no_collapse "Turns off collapsing of init.lua values into ModuleScript containers")
     ).get_matches();
 
     let input = matches.value_of("INPUT").unwrap();
     let package_name = matches.value_of("name").unwrap_or("<UNKNOWN>");
     let folder = matches.value_of("folder");
+    let collapse = match matches.occurrences_of("no_collapse") {
+        0 => true,
+        _ => false,
+    };
 
     let exclude_glob = match matches.values_of("exclude") {
         Some(excludes_iter) => {
@@ -152,6 +157,7 @@ fn main() {
 
     let result = TEMPLATE
         .replace("{{NAME}}", package_name)
+        .replace("{{COLLAPSE}}", if collapse { "true" } else { "false" })
         .replace("{{VERSION}}", env!("CARGO_PKG_VERSION"))
         .replace("{{SOURCE}}", &encoded);
 
