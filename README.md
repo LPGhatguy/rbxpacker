@@ -4,7 +4,12 @@ rbxpacker generates installation scripts for Roblox Lua libraries. Users can ins
 It's intended to serve as a holdover until a better library packaging solution is developed.
 
 ## Installation
-rbxpacker builds with the latest version of Rust, which is currently version 1.21.0.
+rbxpacker builds with the latest version of Rust, currently version 1.21.0.
+
+You can install rbxpacker with Cargo:
+```bash
+cargo install rbxpacker
+```
 
 ## Usage
 rbxpacker outputs the resulting installation script to stdout. To save it, you can write it to a file:
@@ -12,6 +17,8 @@ rbxpacker outputs the resulting installation script to stdout. To save it, you c
 ```sh
 rbxpacker INPUT > installer.lua
 ```
+
+For more options, check out `rbxpacker --help`.
 
 ## License
 rbxpacker is available under the MIT license. See [LICENSE.md](LICENSE.md) for details.
