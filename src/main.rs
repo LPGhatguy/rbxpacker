@@ -4,6 +4,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate clap;
 
+extern crate globset;
 extern crate serde;
 extern crate serde_json;
 
@@ -11,6 +12,8 @@ use std::path::{Component, Path, PathBuf};
 use std::fs::{self, File};
 use std::io::Read;
 use std::process;
+
+use globset::{Glob, GlobSetBuilder};
 
 static TEMPLATE: &'static str = include_str!("import-template.lua");
 
@@ -96,20 +99,43 @@ fn main() {
         (author: env!("CARGO_PKG_AUTHORS"))
         (about: env!("CARGO_PKG_DESCRIPTION"))
         (@arg INPUT: +required "Path to the code to bundle into an install script")
-        (@arg wrap: --wrap +takes_value "Wraps the code in a Folder with the given name")
+        (@arg name: --name +takes_value "The name of the package to show in the installer")
+        (@arg folder: --folder +takes_value "Wraps the package in a Folder with the given name")
+        (@arg exclude: --exclude +takes_value +multiple "Exclude the given glob patterns from the bundle")
     ).get_matches();
 
     let input = matches.value_of("INPUT").unwrap();
-    let wrap = matches.value_of("wrap");
+    let package_name = matches.value_of("name").unwrap_or("<UNKNOWN>");
+    let folder = matches.value_of("folder");
+
+    let exclude_glob = match matches.values_of("exclude") {
+        Some(excludes_iter) => {
+            let mut builder = GlobSetBuilder::new();
+
+            for pattern in excludes_iter {
+                builder.add(Glob::new(pattern).unwrap());
+            }
+
+            Some(builder.build().unwrap())
+        }
+        None => None,
+    };
 
     let root = Path::new(input);
 
     let files = get_files(&root)
         .iter()
+        .filter(|path| {
+            if let Some(ref matcher) = exclude_glob {
+                !matcher.is_match(path)
+            } else {
+                true
+            }
+        })
         .map(|path| {
             let mut rbx_path = path_to_rbx(path.strip_prefix(root).unwrap());
 
-            if let Some(value) = wrap {
+            if let Some(value) = folder {
                 rbx_path.insert(0, value.to_string());
             }
 
@@ -125,6 +151,7 @@ fn main() {
     let encoded = serde_json::to_string(&result).unwrap();
 
     let result = TEMPLATE
+        .replace("{{NAME}}", package_name)
         .replace("{{VERSION}}", env!("CARGO_PKG_VERSION"))
         .replace("{{SOURCE}}", &encoded);
 

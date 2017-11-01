@@ -4,8 +4,13 @@ version = "1.0.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Generates installation scripts for Roblox libraries"
 
+[[bin]]
+path = "src/main.rs"
+name = "rbxpacker"
+
 [dependencies]
 clap = "2.27"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
+globset = "0.2.1"
