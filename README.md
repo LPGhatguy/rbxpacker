@@ -6,7 +6,9 @@ It's intended to serve as a holdover until a better library packaging solution i
 ## Installation
 rbxpacker builds with the latest version of Rust, currently version 1.21.0.
 
-You can install rbxpacker with Cargo:
+On Windows, you can check [the GitHub releases page](https://github.com/LPGhatguy/rbxpacker/releases) to download the latest version of rbxpacker.
+
+Otherwise, you can install rbxpacker with Cargo:
 ```bash
 cargo install rbxpacker
 ```
