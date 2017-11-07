@@ -37,21 +37,25 @@ fn get_files(root: &Path) -> Vec<PathBuf> {
 }
 
 fn get_files_inner(root: &Path, buffer: &mut Vec<PathBuf>) {
-    let children = match fs::read_dir(root) {
-        Ok(v) => v,
-        Err(_) => {
-            eprintln!("Unable to read from directory {}", root.display());
-            process::exit(1);
-        }
-    };
+    if root.is_file() {
+        buffer.push(root.to_path_buf());
+    } else if root.is_dir() {
+        let children = match fs::read_dir(root) {
+            Ok(v) => v,
+            Err(_) => {
+                eprintln!("Unable to read from directory {}", root.display());
+                process::exit(1);
+            }
+        };
 
-    for child in children {
-        let path = child.unwrap().path();
+        for child in children {
+            let path = child.unwrap().path();
 
-        if path.is_file() {
-            buffer.push(path);
-        } else if path.is_dir() {
-            get_files_inner(&path, buffer);
+            if path.is_file() {
+                buffer.push(path);
+            } else if path.is_dir() {
+                get_files_inner(&path, buffer);
+            }
         }
     }
 }
@@ -98,14 +102,13 @@ fn main() {
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
         (about: env!("CARGO_PKG_DESCRIPTION"))
-        (@arg INPUT: +required "Path to the code to bundle into an install script")
+        (@arg INPUT: +required +multiple "Paths to the code to bundle into an install script")
         (@arg name: --name +takes_value "The name of the package to show in the installer")
         (@arg folder: --folder +takes_value "Wraps the package in a Folder with the given name")
         (@arg exclude: --exclude +takes_value +multiple "Exclude the given glob patterns from the bundle")
         (@arg no_collapse: --no_collapse "Turns off collapsing of init.lua values into ModuleScript containers")
     ).get_matches();
 
-    let input = matches.value_of("INPUT").unwrap();
     let package_name = matches.value_of("name").unwrap_or("<UNKNOWN>");
     let folder = matches.value_of("folder");
     let collapse = match matches.occurrences_of("no_collapse") {
@@ -126,32 +129,47 @@ fn main() {
         None => None,
     };
 
-    let root = Path::new(input);
+    let inputs = matches.values_of("INPUT").unwrap();
+    let mut file_entries: Vec<FileEntry> = Vec::new();
 
-    let files = get_files(&root)
-        .iter()
-        .filter(|path| {
-            if let Some(ref matcher) = exclude_glob {
-                !matcher.is_match(path)
-            } else {
-                true
-            }
-        })
-        .map(|path| {
-            let mut rbx_path = path_to_rbx(path.strip_prefix(root).unwrap());
+    for input in inputs {
+        let root = Path::new(input);
+        let is_dir = root.is_dir();
 
-            if let Some(value) = folder {
-                rbx_path.insert(0, value.to_string());
-            }
+        get_files(&root)
+            .iter()
+            .filter(|path| {
+                if let Some(ref matcher) = exclude_glob {
+                    !matcher.is_match(path)
+                } else {
+                    true
+                }
+            })
+            .for_each(|path| {
+                let packed_path = if is_dir {
+                    path.strip_prefix(root).unwrap()
+                } else {
+                    path
+                };
 
-            FileEntry {
-                path: rbx_path,
-                contents: read_file(path),
-            }
-        })
-        .collect::<Vec<_>>();
+                let mut rbx_path = path_to_rbx(packed_path);
 
-    let result = FileEntrySet { files };
+                if let Some(value) = folder {
+                    rbx_path.insert(0, value.to_string());
+                }
+
+                let entry = FileEntry {
+                    path: rbx_path,
+                    contents: read_file(path),
+                };
+
+                file_entries.push(entry);
+            })
+    }
+
+    let result = FileEntrySet {
+        files: file_entries
+    };
 
     let encoded = serde_json::to_string(&result).unwrap();
 
