@@ -15,6 +15,11 @@ local connections = {}
 local function makeLeaf(name, contents)
 	local basename, extension = name:match("^(.*)%.(.-)$")
 
+	if not basename then
+		basename = name
+		extension = ""
+	end
+
 	if extension == "lua" then
 		local created = Instance.new("ModuleScript")
 		created.Name = basename

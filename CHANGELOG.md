@@ -1,7 +1,7 @@
 # rbxpacker Changelog
 
 ## Current master
-- No changes
+- Fixed installation of files with no extension
 
 ## 1.2.1
 - Attempting to publish on Cargo again
