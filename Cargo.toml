@@ -1,6 +1,6 @@
 [package]
 name = "rbxpacker"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 description = "Generates installation scripts for Roblox libraries"
 license = "MIT"

@@ -3,6 +3,9 @@
 ## Current master
 - No changes
 
+## 1.2.1
+- Attempting to publish on Cargo again
+
 ## 1.2.0
 - Added support for multiple `<INPUT>` parameters.
 - Using a file name now works, with some caveats:
