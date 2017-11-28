@@ -1,6 +1,9 @@
 # rbxpacker Changelog
 
 ## Current master
+- *No changes*
+
+## 1.2.2
 - Fixed installation of files with no extension
 
 ## 1.2.1
